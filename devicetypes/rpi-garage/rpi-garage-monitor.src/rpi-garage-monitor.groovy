@@ -17,6 +17,8 @@
  *  Combined with http://thingsthataresmart.wiki/index.php?title=URI_Switch
  */
 
+import groovy.json.JsonSlurper
+
 metadata {
     definition (name: "RPi Garage Monitor", namespace: "rpi_garage", author: "David Hopson") {
         capability "Door Control"
@@ -38,7 +40,7 @@ metadata {
 	  }
     }
     tiles {
-        standardTile("door", "device.door", width: 2, height: 2, canChangeIcon: false) {
+        standardTile("door", "device.door", width: 2, height: 2, canChangeIcon: false ) {
             state "open", label: '${name}', action: "close", icon: "st.doors.garage.garage-open", backgroundColor: "#b82121", nextState: "closing"
             state "closing", label: '${name}', icon: "st.doors.garage.garage-closing", backgroundColor: "#e59e10", nextState: "closed"
             state "closed", label: '${name}', action: "open", icon: "st.doors.garage.garage-closed", backgroundColor: "#ffffff", nextState: "opening"
@@ -64,6 +66,25 @@ def close() {
 	action()
 }
 
+def refresh_action() {
+        log.debug "******* in fresh_action routine *******"
+        def userpass = encodeCredentials(username, password)
+        def last = device.currentValue("door")
+        log.debug("On lastState = '$last'")
+        
+        def headers = getHeader(userpass)
+
+		def result = new physicalgraph.device.HubAction(
+				method: "GET",
+				path: "/status",
+                //path: "/st?id=left",
+                headers: headers
+			    )
+			sendHubCommand(result)
+            log.debug "fresh_action result = ${result}"
+}  
+
+
 def action() {
         log.debug "******* in action routine *******"
         def userpass = encodeCredentials(username, password)
@@ -78,10 +99,10 @@ def action() {
                 headers: headers
 			    )
 			sendHubCommand(result)
-            log.debug result
+            log.debug "action result = ${result}"
     
 			log.debug "Executing on" 
-            refresh()
+            //refresh()
 }  
 
 private encodeCredentials(username, password){
@@ -104,38 +125,37 @@ private getHeader(userpass){
 }
 // parse events into attributes
 def parse(String description) {
+    def parent = getDevice()
+    def childdevice = getChildDevices()
+    //log.info "parent = ${parent}"
+    //log.info "childdevice = ${childdevice}"
     def usn = getDataValue('ssdpUSN')
-    log.debug "Parsing garage DT ${device.deviceNetworkId} ${usn} '${description}'"
+    //log.debug "usn = ${usn}"
+    log.info "######### In parse #########"
+    log.info "description = ${description}"
+    def ssdpUsn = getDataValue('ssdpUSN')
+    log.info "device = ${device}"
+
+    log.debug "Parsing garage DT DNI=${device.deviceNetworkId} ssdpUsn=${ssdpUsn} description='${description}'"
 
     def parsedEvent = parseDiscoveryMessage(description)
+    log.debug "parsedEvent = ${parsedEvent}"
+    log.debug "parent = ${parent}"
+    def headers = new String(parsedEvent['headers'].decodeBase64())
+    log.info "headers = ${headers}"
+    log.debug "body = ${body}"
 
-    if (parsedEvent['body'] != null) {
-        def xmlText = new String(parsedEvent.body.decodeBase64())
-        def xmlTop = new XmlSlurper().parseText(xmlText)
-        def cmd = xmlTop.cmd[0]
-        def targetUsn = xmlTop.usn[0].toString()
-
-        log.debug "Processing command ${cmd} for ${targetUsn}"
-
-        parent.getAllChildDevices().each { child ->
-            def childUsn = child.getDataValue("ssdpUSN").toString()
-            if (childUsn == targetUsn) {
-                if (cmd == 'poll') {
-                    log.debug "Instructing child ${child.device.label} to poll"
-                    child.poll()
-                } else if (cmd == 'status-open') {
-                    def value = 'open'
-                    log.debug "Updating ${child.device.label} to ${value} sending to door"
-                    child.sendEvent(name: 'door', value: value)
-                } else if (cmd == 'status-closed') {
-                    def value = 'closed'
-                    log.debug "Updating ${child.device.label} to ${value} sending to door"
-                    child.sendEvent(name: 'door', value: value)
-                }
-            }
-        }
+    if (parsedEvent['body'] != null && parsedEvent['body'].size() > 4) {
+        def cmd = new String(parsedEvent['body'].decodeBase64())
+        log.info "cmd = ${cmd}"
+        def size = parsedEvent['body'].size()       
+        sendEvent(name: 'door', value: cmd)
+        log.debug "Processing command ${cmd}" 
+        //refresh_action()
+    } else {
+        log.warn "calling refresh_action"
+    	refresh_action()
     }
-    null
 }
 
 private Integer convertHexToInt(hex) {
@@ -149,6 +169,7 @@ private String convertHexToIP(hex) {
 private getHostAddress() {
     def ip = getDataValue("ip")
     def port = getDataValue("port")
+    log.debug "getHostAddress:ip = ${ip}"
 
     if (!ip || !port) {
         def parts = device.deviceNetworkId.split(":")
@@ -156,11 +177,10 @@ private getHostAddress() {
             ip = parts[0]
             port = parts[1]
         } else {
-            //log.warn "Can't figure out ip and port for device: ${device.id}"
+            log.warn "Can't figure out ip and port for device: ${device.id}"
         }
     }
 
-    //convert IP/port
     ip = convertHexToIP(ip)
     port = convertHexToInt(port)
     log.debug "Using ip: ${ip} and port: ${port} for device: ${device.id}"
@@ -182,13 +202,20 @@ def poll() {
     log.debug "Executing 'poll' from ${device.deviceNetworkId} "
 
     subscribeAction(getDataValue("ssdpPath"))
+    def path = getDataValue("ssdpPath")
+    log.debug "******** path = ${ssdpPath} **********"
 }
 
 def refresh() {
     log.debug "Executing 'refresh'"
 
-    //def path = getDataValue("ssdpPath")
+    def path = getDataValue("ssdpPath")
     //getRequest(path)
+    //New
+    //fresh_action()
+    //New
+    refresh_action()
+    log.info "calling subscribeAction - getDataValue with ssdpPath: ${path}"
     subscribeAction(getDataValue("ssdpPath"))
 }
 
@@ -198,77 +225,122 @@ def subscribe() {
 }
 
 private def parseDiscoveryMessage(String description) {
+    log.warn "In parseDiscoveryMessage"
     def device = [:]
     def parts = description.split(',')
+    log.warn "parts = ${parts}"
     parts.each { part ->
         part = part.trim()
         if (part.startsWith('devicetype:')) {
             def valueString = part.split(":")[1].trim()
             device.devicetype = valueString
+            log.warn "devicetype = ${valueString}"
         } else if (part.startsWith('mac:')) {
             def valueString = part.split(":")[1].trim()
             if (valueString) {
                 device.mac = valueString
+                log.warn "mac = ${valueString}"
             }
+        } else if (part.startsWith('ip:')) {
+            def valueString = part.split(":")[1].trim()
+            if (valueString) {
+                device.mac = valueString
+                log.warn "ip = ${valueString}"
+            }    
+        } else if (part.startsWith('port:')) {
+            def valueString = part.split(":")[1].trim()
+            if (valueString) {
+                device.mac = valueString
+                log.warn "port = ${valueString}"
+            }     
+        } else if (part.startsWith('requestId:')) {
+            def valueString = part.split(":")[1].trim()
+            if (valueString) {
+                device.mac = valueString
+                log.warn "requestId = ${valueString}"
+            }     
         } else if (part.startsWith('networkAddress:')) {
             def valueString = part.split(":")[1].trim()
             if (valueString) {
                 device.ip = valueString
+                log.warn "networkAddress = ${valueString}"
             }
         } else if (part.startsWith('deviceAddress:')) {
             def valueString = part.split(":")[1].trim()
             if (valueString) {
                 device.port = valueString
+                log.warn "deviceAddress = ${valueString}"
             }
         } else if (part.startsWith('ssdpPath:')) {
             def valueString = part.split(":")[1].trim()
             if (valueString) {
                 device.ssdpPath = valueString
+                log.warn "ssdpPath = ${valueString}"
             }
         } else if (part.startsWith('ssdpUSN:')) {
             part -= "ssdpUSN:"
             def valueString = part.trim()
             if (valueString) {
                 device.ssdpUSN = valueString
+                log.warn "ssdpUSN = ${valueString}"
             }
         } else if (part.startsWith('ssdpTerm:')) {
             part -= "ssdpTerm:"
             def valueString = part.trim()
             if (valueString) {
                 device.ssdpTerm = valueString
+                log.warn "ssdpTerm = ${valueString}"
             }
         } else if (part.startsWith('headers')) {
             part -= "headers:"
             def valueString = part.trim()
             if (valueString) {
                 device.headers = valueString
+                def headers = new String(device.headers.decodeBase64())
+                log.warn "headers = ${device.headers}"
+                log.warn 
             }
         } else if (part.startsWith('body')) {
             part -= "body:"
             def valueString = part.trim()
             if (valueString) {
                 device.body = valueString
+                log.warn "body = ${valueString}"
             }
         }
     }
-
+    
     device
 }
 
 private subscribeAction(path, callbackPath="") {
     def address = device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")
     def parts = device.deviceNetworkId.split(":")
-    def ip = convertHexToIP(getDataValue("ip"))
-    def port = convertHexToInt(getDataValue("port"))
-    ip = ip + ":" + port
 
-    def result = new physicalgraph.device.HubAction(
-        method: "SUBSCRIBE",
-        path: path,
-        headers: [
-            HOST: ip,
-            CALLBACK: "<http://${address}/notify$callbackPath>",
-            NT: "upnp:event",
-            TIMEOUT: "Second-3600"])
-    result
+    def newIP = getDataValue("ip")
+    log.debug "newIP = ${newIP}"
+    def newPort = getDataValue("port")
+    log.debug "newPort = ${newPort}"
+    
+    if (!newIP || !newPort) {
+        if (parts.length == 2) {
+            ip = parts[0]
+            port = parts[1]
+        } else {
+            //log.warn "Can't figure out ip and port for device: ${device.id}"
+        }
+    } else {
+    	def ip = convertHexToIP(getDataValue("ip"))
+        def port = convertHexToInt(getDataValue("port"))
+    	ip = ip + ":" + port
+    	def result = new physicalgraph.device.HubAction(
+        	method: "SUBSCRIBE",
+        	path: path,
+        	headers: [
+            	HOST: ip,
+            	CALLBACK: "<http://${address}/notify$callbackPath>",
+            	NT: "upnp:event",
+            	TIMEOUT: "Second-3600"])
+    	result
+    }
 }

@@ -24,7 +24,13 @@ metadata {
         capability "Door Control"
         capability "Polling"
         capability "Refresh"
+        capability "Temperature Measurement"
+        capability "Thermostat"
         command "subscribe"
+        command "toggle16"
+        command "toggle2"
+        command "toggleAll"
+        command "restart"
     }
 
     simulator {
@@ -40,7 +46,7 @@ metadata {
 	  }
     }
     tiles {
-        standardTile("door", "device.door", width: 2, height: 2, canChangeIcon: false ) {
+        standardTile("door", "device.door", width: 1, height: 1, canChangeIcon: false ) {
             state "open", label: '${name}', action: "close", icon: "st.doors.garage.garage-open", backgroundColor: "#b82121", nextState: "closing"
             state "closing", label: '${name}', icon: "st.doors.garage.garage-closing", backgroundColor: "#e59e10", nextState: "closed"
             state "closed", label: '${name}', action: "open", icon: "st.doors.garage.garage-closed", backgroundColor: "#ffffff", nextState: "opening"
@@ -50,9 +56,131 @@ metadata {
         standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat") {
             state "default", label:'', action:"refresh.refresh", icon:"st.secondary.refresh"
         }
+        standardTile("restart", "device.switch", canChangeBackground: true) {
+            state "default", label:'restart', action:"restart", backgroundColor: "#ffffff"
+        }
 
+        valueTile("esp.Devicename", "device.esp.Devicename", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'Devicename\n${currentValue}', defaultState: true
+        }
+
+        valueTile("esp.IPaddress", "device.esp.IPaddress", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'IPaddress\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.MACaddress", "device.esp.MACaddress", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'MACaddress\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.bootTime", "device.esp.bootTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'bootTime\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.ChipId", "device.esp.ChipId", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'ChipId\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.FlashChipId", "device.esp.FlashChipId", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'FlashChipId\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.FlashChipSize", "device.esp.FlashChipSize", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'FlashChipSize\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.Freeheap", "device.esp.Freeheap", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'Freeheap\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.CoreVersion", "device.esp.CoreVersion", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'CoreVersion\n${currentValue}', defaultState: true
+        }  
+        valueTile("esp.SdkVersion", "device.esp.SdkVersion", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'SdkVersion\n${currentValue}', defaultState: true
+        } 
+        valueTile("esp.CpuFreqMHz", "device.esp.CpuFreqMHz", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'CpuFreqMHz\n${currentValue}', defaultState: true
+        }        
+        valueTile("esp.SketchSize", "device.esp.SketchSize", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'SketchSize\n${currentValue}', defaultState: true
+        }
+        valueTile("esp.SdkVersion", "device.esp.SdkVersion", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'SdkVersion\n${currentValue}', defaultState: true
+        } 
+        valueTile("esp.SketchName", "device.esp.SketchName", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+            state "on", label:'SketchName\n${currentValue}', defaultState: true
+        }
+        valueTile("esp.rssi", "device.esp.rssi", width: 1, height: 1, canChangeBackground: false) {
+        	state("temperature", label:'signal\n${currentValue}', 
+            backgroundColors:[
+                [value: -20, color: "#153591"],
+                [value: -30, color: "#1e9cbb"],
+                [value: -40, color: "#90d2a7"],
+                [value: -50, color: "#44b621"],
+                [value: -60, color: "#f1d801"],
+                [value: -70, color: "#d04e00"],
+                [value: -80, color: "#bc2323"]
+            ])
+    	}  
+        
+        valueTile("esp.temperature",  "device.esp.temperature",  width: 1, height: 1, canChangeBackground: true) {
+        	state("temperature", label:'${currentValue}°', icon: "st.Weather.weather2", 
+            backgroundColors:[
+                [value: 31, color: "#153591"],
+                [value: 44, color: "#1e9cbb"],
+                [value: 59, color: "#90d2a7"],
+                [value: 74, color: "#44b621"],
+                [value: 84, color: "#f1d801"],
+                [value: 95, color: "#d04e00"],
+                [value: 96, color: "#bc2323"]
+            ])
+    	}
+        
+        valueTile("esp.humidity",  "device.esp.humidity",  width: 1, height: 1, canChangeBackground: true) {
+        	state("temperature", label:'${currentValue}%', 
+            backgroundColors:[
+                [value: 31, color: "#153591"],
+                [value: 44, color: "#1e9cbb"],
+                [value: 59, color: "#90d2a7"],
+                [value: 74, color: "#44b621"],
+                [value: 84, color: "#f1d801"],
+                [value: 95, color: "#d04e00"],
+                [value: 96, color: "#bc2323"]
+            ])
+    	}
+        
+        standardTile("esp.led16", "device.esp.led16",   width: 1, height: 1, canChangeBackground: true) {
+			state "off", label: 'LED 16', action: "toggle16", icon: "st.Lighting.light13", backgroundColor: "#ffffff", nextState: "on"
+			state "on", label: 'LED 16', action: "toggle16", icon: "st.Lighting.light11", backgroundColor: "#79b821", nextState: "off"
+		} 
+        standardTile("esp.led2", "device.esp.led2",   width: 1, height: 1, canChangeBackground: true) {
+			state "off", label: 'LED 2', action: "toggle2", icon: "st.Lighting.light13", backgroundColor: "#ffffff", nextState: "on"
+			state "on", label: 'LED 2', action: "toggle2", icon: "st.Lighting.light11", backgroundColor: "#79b821", nextState: "off"
+		}
+        standardTile("esp.led", "device.esp.led",   width: 1, height: 1, canChangeBackground: true) {
+			state "off", label: 'ALL LED', action: "toggleAll", icon: "st.Lighting.light13", backgroundColor: "#ffffff", nextState: "on"
+			state "on", label: 'ALL LED', action: "toggleAll", icon: "st.Lighting.light11", backgroundColor: "#79b821", nextState: "off"
+		}         
+        
         main "door"
-        details (["door", "refresh"])
+        details (["door", 
+        "refresh",
+        "esp.temperature",
+        "esp.humidity",
+        "esp.rssi",
+        "restart",
+        "esp.led16",
+        "esp.led2",
+        "esp.led",
+        "esp.Devicename", 
+        "esp.IPaddress",
+        "esp.MACaddress",
+        "esp.bootTime",
+        "esp.ChipId",
+        "esp.FlashChipId",
+        "esp.FlashChipSize",
+        "esp.RealFlashChipSize",
+        "esp.Freeheap",
+        "esp.CoreVersion",
+        "esp.SdkVersion",
+        "esp.CpuFreqMHz",
+        "esp.SketchSize",
+        "esp.SketchVersion",
+        "esp.SketchName"
+        ])
     }
 }
 
@@ -66,24 +194,53 @@ def close() {
 	action()
 }
 
+def setFeature(query) {
+    def userpass = encodeCredentials(username, password)
+    def headers = getHeader(userpass)
+    log.debug "headers = ${headers}"
+    //def dni = setDeviceNetworkId("${control_ip}","${control_port}")
+
+     
+    def action = new physicalgraph.device.HubAction(
+		method: "GET",
+		path: query,
+        headers: headers,
+        dni
+	)
+    
+    log.info "setFeature query: ${query}\naction =\n${action}"
+	return action
+}
+
 def refresh_action() {
         log.debug "******* in fresh_action routine *******"
-        def userpass = encodeCredentials(username, password)
-        def last = device.currentValue("door")
-        log.debug("On lastState = '$last'")
+        //def userpass = encodeCredentials(username, password)
+        //def last = device.currentValue("door")
+        //log.debug("On lastState = '$last'")
         
-        def headers = getHeader(userpass)
-
+        //def headers = getHeader(userpass)
+/*
 		def result = new physicalgraph.device.HubAction(
 				method: "GET",
 				path: "/status",
                 //path: "/st?id=left",
                 headers: headers
 			    )
-			sendHubCommand(result)
-            log.debug "fresh_action result = ${result}"
+*/        
+         
+	     sendHubCommand(setFeature("/status"))
+         //log.debug "fresh_action result = ${result}"
+/*        
+         def getdevice = new physicalgraph.device.HubAction(
+				method: "GET",
+				path: "/device",
+                headers: headers
+			    )
+*/                
+	     sendHubCommand(setFeature("/device"))
+         //log.debug "fresh_action getdevice = ${getdevice}"
+ 
 }  
-
 
 def action() {
         log.debug "******* in action routine *******"
@@ -98,10 +255,10 @@ def action() {
 				path: "${on_path}",
                 headers: headers
 			    )
-			sendHubCommand(result)
-            log.debug "action result = ${result}"
+	    sendHubCommand(result)
+        log.debug "action result = ${result}"
     
-			log.debug "Executing on" 
+		log.debug "Executing on" 
             //refresh()
 }  
 
@@ -124,38 +281,60 @@ private getHeader(userpass){
     return headers
 }
 // parse events into attributes
+
 def parse(String description) {
+    log.info "######### In parse #########"
+    //log.info "description = ${description}"
+    
     def parent = getDevice()
     def childdevice = getChildDevices()
+    def msg = parseLanMessage(description)
+    
+    
+    //log.debug "msg = ${msg}"
     //log.info "parent = ${parent}"
     //log.info "childdevice = ${childdevice}"
+    
     def usn = getDataValue('ssdpUSN')
-    //log.debug "usn = ${usn}"
-    log.info "######### In parse #########"
-    log.info "description = ${description}"
+    //log.debug "usn = ${usn}"    
     def ssdpUsn = getDataValue('ssdpUSN')
-    log.info "device = ${device}"
-
-    log.debug "Parsing garage DT DNI=${device.deviceNetworkId} ssdpUsn=${ssdpUsn} description='${description}'"
+    //log.info "device = ${device}"
+    //log.debug "Parsing garage DT DNI=${device.deviceNetworkId} ssdpUsn=${ssdpUsn} description='${description}'"
 
     def parsedEvent = parseDiscoveryMessage(description)
-    log.debug "parsedEvent = ${parsedEvent}"
-    log.debug "parent = ${parent}"
+    //log.debug "parsedEvent = ${parsedEvent}"
+    //log.debug "parent = ${parent}"
     def headers = new String(parsedEvent['headers'].decodeBase64())
-    log.info "headers = ${headers}"
-    log.debug "body = ${body}"
+    def body = parsedEvent['body']
+    //log.info "headers = ${headers}"
+    //log.debug "body = ${body}"
 
-    if (parsedEvent['body'] != null && parsedEvent['body'].size() > 4) {
+    if (parsedEvent['body'] != null && parsedEvent['body'].size() > 4 && parsedEvent['body'].size() < 20) {
         def cmd = new String(parsedEvent['body'].decodeBase64())
         log.info "cmd = ${cmd}"
-        def size = parsedEvent['body'].size()       
-        sendEvent(name: 'door', value: cmd)
+        def size = parsedEvent['body'].size()    
         log.debug "Processing command ${cmd}" 
-        //refresh_action()
+        log.info "sending command:  ${cmd} to sendEvent door"
+        sendEvent(name: 'door', value: cmd)
+        return null
     } else {
-        log.warn "calling refresh_action"
-    	refresh_action()
-    }
+        def json = new groovy.json.JsonSlurper().parseText(msg.body)
+    
+        log.warn "json = ${json}"
+   
+        if (!json) {
+           sendEvent(name: "refresh", isStateChange: "true", value: "Idle", descriptionText: "Refresh was activated")
+           return null
+        }  
+    
+        sendEvent(name: "refresh", isStateChange: "true", value: "Idle", descriptionText: "Refresh was activated")
+    
+        log.debug "process each json key" 
+        json.keySet().each {
+           log.debug "key = ${it} val = ${json[it]}"
+           sendEvent(name: it, value: json[it])
+        }
+    }   
 }
 
 private Integer convertHexToInt(hex) {
@@ -167,8 +346,10 @@ private String convertHexToIP(hex) {
 }
 
 private getHostAddress() {
-    def ip = getDataValue("ip")
-    def port = getDataValue("port")
+    //def ip = getDataValue("ip")
+    def ip = control_ip
+    //def port = getDataValue("port")
+    def port = control_port
     log.debug "getHostAddress:ip = ${ip}"
 
     if (!ip || !port) {
@@ -223,6 +404,29 @@ def subscribe() {
     log.debug "Subscribe requested"
     subscribeAction(getDataValue("ssdpPath"))
 }
+
+
+def Toggle(device) {
+    sendHubCommand(setFeature(device))
+}
+
+def toggle16() {
+	log.info "Executing toggle16"
+    Toggle("/toggleLed16")
+}
+
+def toggle2() {
+	log.info "Executing toggle2"
+    Toggle("/toggleLed2")
+}
+
+def toggleAll() {
+    Toggle("/toggle")
+}    
+
+def restart() {
+    Toggle("/restart")
+}    
 
 private def parseDiscoveryMessage(String description) {
     log.warn "In parseDiscoveryMessage"
@@ -317,9 +521,11 @@ private subscribeAction(path, callbackPath="") {
     def address = device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")
     def parts = device.deviceNetworkId.split(":")
 
-    def newIP = getDataValue("ip")
+    //def newIP = getDataValue("ip")
+    def newIP = control_ip
     log.debug "newIP = ${newIP}"
-    def newPort = getDataValue("port")
+    //def newPort = getDataValue("port")
+    def newPort = control_port
     log.debug "newPort = ${newPort}"
     
     if (!newIP || !newPort) {
@@ -327,11 +533,13 @@ private subscribeAction(path, callbackPath="") {
             ip = parts[0]
             port = parts[1]
         } else {
-            //log.warn "Can't figure out ip and port for device: ${device.id}"
+            log.warn "Can't figure out ip and port for device: ${device.id}"
         }
     } else {
-    	def ip = convertHexToIP(getDataValue("ip"))
-        def port = convertHexToInt(getDataValue("port"))
+    	//def ip = convertHexToIP(getDataValue("ip"))
+        def ip = control_ip
+        //def port = convertHexToInt(getDataValue("port"))
+        def port = control_port
     	ip = ip + ":" + port
     	def result = new physicalgraph.device.HubAction(
         	method: "SUBSCRIBE",

@@ -50,9 +50,9 @@ uploadonly: does not compiles Sketch, just up load it by network or serial
 //         SDA        ->        D2
 //         SCL        ->        D1
 ```
-![](https://github.com/dhop90/rpi_garage_monitor/blob/master/ESP8266_pinout.jpg)  
-![](https://github.com/dhop90/rpi_garage_monitor/blob/master/nodemcu_pins.png)  
-![](https://github.com/dhop90/rpi_garage_monitor/blob/master/cam-pinout.jpg)    
-![](https://github.com/dhop90/rpi_garage_monitor/blob/master/IMG_6650.PNG) 
-![](https://github.com/dhop90/rpi_garage_monitor/blob/master/IMG_6651.PNG) 
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/images/ESP8266_pinout.jpg)  
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/images/nodemcu_pins.png)  
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/images/cam-pinout.jpg)    
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/images/IMG_6650.PNG) 
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/images/IMG_6651.PNG) 
 

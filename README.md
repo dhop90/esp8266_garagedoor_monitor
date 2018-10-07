@@ -2,10 +2,11 @@ RPi Garage Monitor Device Type with Camera and Temperature Sensor
 
 Combinded with an ESP8266 microcontroller, this divice driver is capable of monitoring and controlling a garage door, reporting temperature, humity and wifi signal strength as well as taking a video of garage door state.
 
+```
 // Garagedoor controler and
 // ESP8266-12E ArduCAM Mini Camera Server
 // with Temperature sensor
-//
+
 // This program demonstrates using an ArduCAM Mini 2MP camera with an ESP8266-12E module.
 // An OV2640 2MP ArduCAM Mini was used with this program.
 //
@@ -31,3 +32,4 @@ Combinded with an ESP8266 microcontroller, this divice driver is capable of moni
 //         VCC        ->       3V3
 //         SDA        ->        D2
 //         SCL        ->        D1
+```

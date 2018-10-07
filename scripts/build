@@ -2,12 +2,12 @@
 HOST=$1
 SKETCH_BASE=$2
 METHOD=$3
-BASE=/Users/dhopson/Documents/Arduino
+BASE=~/Documents/Arduino
 SKETCH=$BASE/Sketches/$SKETCH_BASE/${SKETCH_BASE}.ino
 BUILD=$BASE/build
 BUILDER=$BASE/go
 BASE_LIB=$BASE/libraries/Base/Base.cpp
-ARDUINO15=/Users/dhopson/Library/Arduino15
+ARDUINO15=~/Library/Arduino15
 TOOLS_BUILDER=/Applications/Arduino.app/Contents/Java/tools-builder
 OTAPASSWORD='"'$(pass nodemcu/ota)'"'
 SSID='"'$(pass nodemcu/ssid)'"'

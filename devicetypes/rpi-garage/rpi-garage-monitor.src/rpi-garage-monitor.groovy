@@ -1,7 +1,7 @@
 /**
- *  RPi Garage Monitor Device Type
+ *  RPi Garage Monitor Device Type with Camera and Temperature Sensor
  *
- *  Copyright 2015 Richard L. Lynch <rich@richlynch.com>
+ *  Copyright 2017 David Hopson <dhop90@gmail.com.com>
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -184,7 +184,8 @@ metadata {
         details ([
         "esp.Door", 
         "refresh",
-        "light", 
+        //"light", 
+        "esp.Led",
      
         "esp.temperature",
         "esp.humidity",
@@ -192,8 +193,9 @@ metadata {
         
         "cameraDetails",
         
-        "esp.Led",
+        //"esp.Led",
         "restart",
+        "image",
         "image",
         
         "esp.currentTime",
@@ -394,7 +396,6 @@ def refresh_action() {
 def action() {
     sendHubCommand(setFeature(on_path))
     take()
-    //runIn(15,take)
 }  
 
 def subscribe() {
@@ -404,7 +405,6 @@ def subscribe() {
 def Toggle(device) {
     log.info "Toggle: ${device}"
     sendHubCommand(setFeature(device))
-    //sendHubCommand(setFeature("/device")) 
 }
 
 def toggleLight() {
@@ -429,14 +429,12 @@ def restart() {
 }    
 
 private encodeCredentials(username, password){
-    //log.debug "Encoding credentials"
     def userpassascii = "${username}:${password}"
     def userpass = "Basic " + userpassascii.encodeAsBase64().toString()
     return userpass
 }
 
 private getHeader(userpass){
-    //log.debug "state.control_ip:port = ${control_ip}:${control_port}"
     def headers = [:]
     headers.put("HOST", "${control_ip}:${control_port}")
     headers.put("Authorization", userpass)
@@ -452,9 +450,7 @@ private String convertHexToIP(hex) {
 }
 
 private getHostAddress() {
-    //def ip = getDataValue("ip")
     def ip = control_ip
-    //def port = getDataValue("port")
     def port = control_port
     log.debug "getHostAddress:ip = ${ip}, port = ${port}"
 
@@ -475,10 +471,8 @@ private getHostAddress() {
 }
 
 private def parseDiscoveryMessage(String description) {
-    //log.warn "In parseDiscoveryMessage"
     def device = [:]
     def parts = description.split(',')
-    //log.warn "parts = ${parts}"
     parts.each { part ->
         part = part.trim()
         if (part.startsWith('devicetype:')) {
@@ -567,12 +561,8 @@ private subscribeAction(path, callbackPath="") {
     def address = device.hub.getDataValue("localIP") + ":" + device.hub.getDataValue("localSrvPortTCP")
     def parts = device.deviceNetworkId.split(":")
 
-    //def newIP = getDataValue("ip")
     def newIP = control_ip
-    //log.debug "newIP = ${newIP}"
-    //def newPort = getDataValue("port")
     def newPort = control_port
-    //log.debug "newPort = ${newPort}"
     
     if (!newIP || !newPort) {
         if (parts.length == 2) {
@@ -582,9 +572,7 @@ private subscribeAction(path, callbackPath="") {
             log.warn "Can't figure out ip and port for device: ${device.id}"
         }
     } else {
-    	//def ip = convertHexToIP(getDataValue("ip"))
         def ip = control_ip
-        //def port = convertHexToInt(getDataValue("port"))
         def port = control_port
     	ip = ip + ":" + port
     	def result = new physicalgraph.device.HubAction(

@@ -6,6 +6,18 @@ Camera implementation was take from https://github.com/dmainmon/ArduCAM-mini-ESP
 
 Copy the contents of the Base and ArduCAM into the Arduino Libraries folder. On a windows computer this is usually "Documents/Arduino/Libraries"
 
+Copy the GaragedoorCamTempSensor to the Arduino/Sketches directory.
+
+scripts directory contains a build script to be able to compile from the command line.
+
+```
+./scripts/build: usages: hostname sketch [compile|push|network|serial|uploadonly]
+compile: only compiles the sketch
+   push: compiles and commits changes to repo
+network: compiles and tries to upload sketch via network
+ serial: compiles and tries to upload sketch via serial
+uploadonly: does not compiles Sketch, just up load it by network or serial
+```
 
 ```
 // Garagedoor controler and

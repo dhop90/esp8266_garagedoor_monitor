@@ -33,7 +33,6 @@ Combinded with an ESP8266 microcontroller, this divice driver is capable of moni
 //         SDA        ->        D2
 //         SCL        ->        D1
 ```
-
-![](../../../dhop90/rpi_garage_monitor/raw/master/images/nodemcu_pins.png) 
-![](../../../dhop90/rpi_garage_monitor/raw/master/images/cam-pinout.jpg)  
-![](../../../dhop90/rpi_garage_monitor/raw/master/images/ESP8266_pinout.jpg)
+![](../../../dhop90/rpi_garage_monitor/raw/master/nodemcu_pins.png) 
+![](../../../dhop90/rpi_garage_monitor/raw/master/cam-pinout.jpg)  
+![](../../../dhop90/rpi_garage_monitor/raw/master/ESP8266_pinout.jpg)

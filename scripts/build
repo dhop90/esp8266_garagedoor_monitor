@@ -1,0 +1,179 @@
+#!/bin/bash
+HOST=$1
+SKETCH_BASE=$2
+METHOD=$3
+BASE=/Users/dhopson/Documents/Arduino
+SKETCH=$BASE/Sketches/$SKETCH_BASE/${SKETCH_BASE}.ino
+BUILD=$BASE/build
+BUILDER=$BASE/go
+BASE_LIB=$BASE/libraries/Base/Base.cpp
+ARDUINO15=/Users/dhopson/Library/Arduino15
+TOOLS_BUILDER=/Applications/Arduino.app/Contents/Java/tools-builder
+OTAPASSWORD='"'$(pass nodemcu/ota)'"'
+SSID='"'$(pass nodemcu/ssid)'"'
+WIFIPASSWORD='"'$(pass nodemcu/ssidpassword)'"'
+#BASEVER=1
+
+if [ $# -ne 3 ]; then
+   echo $0: "usages: hostname sketch [compile|push|network|serial|uploadonly]"
+   echo "compile: only compiles the sketch"
+   echo "   push: compiles and commits changes to repo"
+   echo "network: compiles and tries to upload sketch via network"
+   echo " serial: compiles and tries to upload sketch via serial"
+   echo "uploadonly: does not compiles Sketch, just up load it by network or serial"
+   exit 1
+fi
+
+if [ -f $SKETCH ]; then
+   echo "SKETCH = ${SKETCH}"
+else
+   echo "No sketch provided"
+   echo $0: "usages: hostname sketch"
+   exit 1
+fi	
+
+function get_version {
+   VER=$(grep VERSION $SKETCH)
+   result=$?
+   CURRENT_VER=$(grep VERSION $SKETCH | grep String | cut -d\" -f2 | cut -f2 -d.)
+   #echo "get_version result = $result"
+   #read -p "Press [Enter] key to continue..."
+   if [ $result == 1 ]; then
+	   return
+   fi	   
+   BASEVER=$(grep VERSION $SKETCH | grep String | cut -d\" -f2 | cut -f1 -d. | cut -f2 -dv)
+
+   VER=$((CURRENT_VER + 1))
+   sed -i.bak "s/v$BASEVER.$CURRENT_VER/v$BASEVER.$VER/" $SKETCH
+   echo "Incrementing version from v$BASEVER.$CURRENT_VER to v$BASEVER.$VER"
+}
+
+function insert_secrets {
+   sed -i.bak "s/_OTA_PASSWORD_/$OTAPASSWORD/" $SKETCH
+   sed -i.bak "s/_SSID_/$SSID/" $SKETCH
+   sed -i.bak "s/_WIFIPASSWORD_/$WIFIPASSWORD/" $SKETCH
+}
+
+function remove_secrets {
+   sed -i.bak "s/$OTAPASSWORD/_OTA_PASSWORD_/" $SKETCH
+   sed -i.bak "s/$SSID/_SSID_/" $SKETCH
+   sed -i.bak "s/$WIFIPASSWORD/_WIFIPASSWORD_/" $SKETCH
+}
+
+function build_sketch {
+   get_version
+   remove_secrets
+   read -p "Press [Enter] key to continue..."
+   insert_secrets
+   get_version
+   sed -i.bak "s/CHANGENAME/${SKETCH_BASE}.ino/" $BASE_LIB
+   echo "Compling sketch ${SKETCH} version ${BASEVER}.${VER}"
+   echo " "
+   $BUILDER/arduino-builder \
+      -compile \
+      -hardware $ARDUINO15/packages \
+      -hardware $BASE/hardware \
+      -tools $ARDUINO15/packages/esp8266/tools \
+      -tools $TOOLS_BUILDER \
+      -libraries $BASE/libraries \
+      -fqbn=esp8266:esp8266:nodemcuv2:CpuFrequency=160,UploadSpeed=115200,FlashSize=4M3M \
+      -build-path $BUILD \
+      -verbose \
+      $SKETCH
+   result=$?
+   echo " "
+   echo "Finished Compling sketch ${SKETCH}"
+   echo " "
+   sed -i.bak "s/${SKETCH_BASE}.ino/CHANGENAME/" $BASE_LIB
+   remove_secrets
+   return $result
+}
+
+function uploadNetwork {
+   # read -s -p "Enter Password for ${HOST}:" PASSWORD
+   PASSWORD=$(pass nodemcu/ota)
+   echo " " 
+   echo "uploading image $BUILD/${SKETCH_BASE}.ino.bin version ${BASEVER}.${VER} to host ${HOST}"
+   echo " "
+   if [ -f $BUILD/${SKETCH_BASE}.ino.bin ]; then
+        python $BASE/scripts/espota.py -i $HOST -p 8266 --auth=$PASSWORD -f $BUILD/${SKETCH_BASE}.ino.bin
+   else
+        echo "no sketch firmware to upload"
+   fi     
+}   
+
+function uploadSerial {
+   echo " "
+   echo "uploading image $BUILD/${SKETCH_BASE}.ino.bin version ${BASEVER}.${VER} via port /dev/cu/SLAB_USBtoUART"
+   echo " "
+   if [ -f $BUILD/${SKETCH_BASE}.ino.bin ]; then
+        esptool.py --chip esp8266 --port /dev/cu.SLAB_USBtoUART --baud 115200 --after hard_reset write_flash -fm dout 0x00000 $BUILD/${SKETCH_BASE}.ino.bin 
+   else
+        echo "no sketch firmware to upload"
+   fi     
+}
+
+function pushGit {
+   $(cd $BASE) 
+   git pull
+   git add .
+   git commit -m "commit of sketch ${SKETCH_BASE}.ino version ${BASEVER}.${VER}"
+   git push
+}
+
+# Main function
+
+#get_version
+#sed -i.bak "s/CHANGENAME/${SKETCH_BASE}.ino/" $BASE_LIB
+read -p "Press [Enter] key to continue..."
+case $METHOD in
+	compile)
+           # compile only
+	   echo "Compiling........"
+	   build_sketch
+	   if [ $result == 0 ]; then
+              echo "Compilation was successful"
+           else   
+              echo "Compilation was NOT successful"
+	   fi
+	    ;;
+        push)
+           # compiles and updates git
+	   build_sketch
+	   if [ $result == 0 ]; then
+              echo "build finished"
+              read -p "Do you want to push current files to repo? (y/n): " UPDATE
+	      if [ $UPDATE == "y" ]; then
+                 pushGit
+              fi
+	   fi	   
+            ;;		
+        network)
+	   # newtwork upload
+	   build_sketch
+	   if [ $result == 0 ]; then
+	      uploadNetwork
+   	   fi
+	    ;;
+        serial)
+           # serial upload
+	   build_sketch
+	   if [ $result == 0 ]; then
+	      uploadSerial
+   	   fi
+            ;;
+    uploadonly)
+	    read -p "Press 'n' to upload via network or 's' to upload via serial: " MODE
+	    if [ $MODE == "n" ]; then
+		    uploadNetwork
+	    elif [ $MODE == "s" ]; then
+		    uploadSerial
+	    else 
+		    echo "Bye"
+	    fi
+	    ;;	    
+          *)
+           echo $"Usage: $0 host sketch {push|compile|network|serial}"
+           exit 1
+esac
+#sed -i.bak "s/${SKETCH_BASE}.ino/CHANGENAME/" $BASE_LIB

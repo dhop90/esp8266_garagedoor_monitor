@@ -69,7 +69,7 @@ const String SOFTWARE_VERSION = "v1.133";
 const PROGMEM uint8_t pin_led2 = 2; //on-board led
 const PROGMEM uint8_t pin_led16 = 16; //on-board led
 char* OTA_USERNAME = "pi" ;
-// OTA and Wifi values.  Set for environment, included build script gets values for password store
+// OTA and Wifi values.  Set for environment, included build script gets values from password store
 char* OTA_PASSWORD = _OTA_PASSWORD_;
 char* SSID = _SSID_;
 char* WIFIPASSWORD = _WIFIPASSWORD_;

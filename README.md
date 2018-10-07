@@ -4,7 +4,7 @@ Combinded with an ESP8266 microcontroller, this divice driver is capable of moni
 
 Camera implementation was take from https://github.com/dmainmon/ArduCAM-mini-ESP8266-12E-Camera-Server
 
-Copy the contents of the Base and ArduCAM into the Arduino Libraries folder. On a windows computer this is usually "Documents/Arduino/Libraries"
+Copy the contents of libraries into the Arduino Libraries folder. On a windows computer this is usually "Documents/Arduino/Libraries"
 
 Copy the GaragedoorCamTempSensor to the Arduino/Sketches directory.
 

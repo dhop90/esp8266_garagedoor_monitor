@@ -36,4 +36,6 @@ Combinded with an ESP8266 microcontroller, this divice driver is capable of moni
 ![](https://github.com/dhop90/rpi_garage_monitor/blob/master/ESP8266_pinout.jpg)  
 ![](https://github.com/dhop90/rpi_garage_monitor/blob/master/nodemcu_pins.png)  
 ![](https://github.com/dhop90/rpi_garage_monitor/blob/master/cam-pinout.jpg)    
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/IMG_6650.PNG) 
+![](https://github.com/dhop90/rpi_garage_monitor/blob/master/IMG_6651.PNG) 
 

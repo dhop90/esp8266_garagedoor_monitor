@@ -21,16 +21,23 @@ import groovy.json.JsonSlurper
 
 metadata {
     definition (name: "ESP8266 Garage Monitor", namespace: "dhop90", author: "David Hopson") {
-        capability "Door Control"
+        //capability "Door Control"
+        //capability "Garage Door Control"
         capability "Polling"
         capability "Refresh"
         capability "Image Capture"
+        capability "Contact Sensor"
+        capability "Switch"
+        capability "Temperature Measurement"
+        capability "Relative Humidity Measurement"
         command "subscribe"
         command "toggle16"
         command "toggleLight"
         command "restart"
         command "take"
         command "loadpicture"
+        //command "open"
+        //command "close"
     }
 
     simulator {
@@ -64,21 +71,21 @@ metadata {
         	state "image", label: "Load", action: "loadpicture", icon: "st.camera.dropcam", backgroundColor: "#FFFFFF", nextState:"taking"
     	}
         
-        standardTile("esp.Door", "device.esp.Door", width: 1, height: 1, canChangeIcon: false ) {
-            state "open", label: '${name}', action: "close", icon: "st.doors.garage.garage-open", backgroundColor: "#b82121", nextState: "closing"
+        standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: false ) {
+            state "open", label: '${name}', action: "switch.off", icon: "st.doors.garage.garage-open", backgroundColor: "#b82121", nextState: "closing"
             state "closing", label: '${name}', icon: "st.doors.garage.garage-closing", backgroundColor: "#e59e10", nextState: "closed"
-            state "closed", label: '${name}', action: "open", icon: "st.doors.garage.garage-closed", backgroundColor: "#ffffff", nextState: "opening"
+            state "closed", label: '${name}', action: "switch.on", icon: "st.doors.garage.garage-closed", backgroundColor: "#ffffff", nextState: "opening"
             state "opening", label: '${name}', icon: "st.doors.garage.garage-opening", backgroundColor: "#e59e10", nextState: "open"
         }        
         standardTile("refresh", "device.refresh", width: 1, height: 1, canChangeBackground: true) {
         	state "Idle", label:'refresh', action:"refresh", icon:"st.secondary.refresh-icon", nextState: "Active", backgroundColor: "#ffffff", defaultState: true
             state "Active", label:'refresh', action:"refresh", icon:"st.secondary.refresh-icon", nextState: "Idle", backgroundColor: "#cccccc", defaultState: false
     	}            
-        standardTile("restart", "device.switch", canChangeBackground: true) {
+        standardTile("restart", "device.restart", canChangeBackground: true) {
             state "Idle", label:'restart', action:"restart", backgroundColor: "#ffffff", nextState: "Active", defaultState:true, icon: "st.samsung.da.RC_ic_power"
             state "Active", label:'restart', action:"restart", backgroundColor: "#cccccc", nextState: "Idle", defaultState:false, icon: "st.samsung.da.RC_ic_power"
         } 
-        valueTile("esp.currentTime", "device.esp.CurrentTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+        valueTile("esp.CurrentTime", "device.esp.CurrentTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
             state "on", label:'currentTime\n${currentValue}', defaultState: true
         } 
         valueTile("esp.Devicename", "device.esp.Devicename", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
@@ -90,10 +97,10 @@ metadata {
         valueTile("esp.MACaddress", "device.esp.MACaddress", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
             state "on", label:'MACaddress\n${currentValue}', defaultState: true
         }  
-        valueTile("esp.upTime", "device.esp.UpTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+        valueTile("esp.UpTime", "device.esp.UpTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
             state "on", label:'upTime\n${currentValue}', defaultState: true
         } 
-        valueTile("esp.bootTime", "device.esp.BootTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
+        valueTile("esp.BootTime", "device.esp.BootTime", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
             state "on", label:'bootTime\n${currentValue}', defaultState: true
         }  
         valueTile("esp.ChipId", "device.esp.ChipId", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
@@ -138,7 +145,7 @@ metadata {
         valueTile("esp.FlashChipSpeed", "device.esp.FlashChipSpeed", width: 3, height: 1, decoration: "flat", canChangeBackground: false) {
             state "on", label:'FlashChipSpeed\n${currentValue}', defaultState: true
         }        
-        valueTile("esp.rssi", "device.esp.Rssi", width: 1, height: 1, canChangeBackground: false) {
+        valueTile("esp.Rssi", "device.esp.Rssi", width: 1, height: 1, canChangeBackground: false) {
         	state("temperature", label:'rssi\n${currentValue}%', 
             backgroundColors:[
                 [value: 8, color: "#153591"],
@@ -147,7 +154,7 @@ metadata {
                 [value: 90, color: "#44b621"],
             ])
     	}        
-        valueTile("esp.temperature",  "device.esp.Temperature",  width: 1, height: 1, canChangeBackground: true) {
+        valueTile("temperature",  "device.temperature",  width: 1, height: 1, canChangeBackground: true) {
         	state("temperature", label:'${currentValue}°', icon: "st.Weather.weather2", 
             backgroundColors:[
                 [value: 31, color: "#153591"],
@@ -159,7 +166,7 @@ metadata {
                 [value: 96, color: "#bc2323"]
             ])
     	}        
-        valueTile("esp.humidity",  "device.esp.Humidity",  width: 1, height: 1, canChangeBackground: true) {
+        valueTile("humidity",  "device.humidity",  width: 1, height: 1, canChangeBackground: true) {
         	state("temperature", label:'humidity ${currentValue}%', 
             backgroundColors:[
                 [value: 31, color: "#153591"],
@@ -180,36 +187,34 @@ metadata {
 			state "on", label: 'Light', action: "toggleLight", icon: "st.Lighting.light11", backgroundColor: "#79b821", nextState: "off"
 		} 
         
-        main "esp.Door"
+        main "switch"
         details ([
-        "esp.Door", 
+        "switch", 
         "refresh",
-        //"light", 
         "esp.Led",
      
-        "esp.temperature",
-        "esp.humidity",
-        "esp.rssi",
+        "temperature",
+        "humidity",
+        "esp.Rssi",
+        
+        "restart",
+        "take",
+        "image",  
         
         "cameraDetails",
         
-        //"esp.Led",
-        "restart",
-        "image",
-        "image",
-        
-        "esp.currentTime",
         "esp.Devicename", 
         "esp.IPaddress",
-        "esp.MACaddress",
+        "esp.MACaddress",        
+        "esp.CurrentTime",
+        "esp.BootTime",
+        "esp.UpTime",
         "esp.CpuFreqMHz",
         "esp.Freeheap", 
-        "esp.UpTime",
-        "esp.bootTime",
         "esp.ChipId",
         "esp.FlashChipId",
         "esp.FlashChipSize",
-        "esp.RealFlashChipSize",        
+        "esp.RealFlashChipSize",
         "esp.FlashChipSpeed",
         "esp.CoreVersion",
         "esp.SdkVersion",
@@ -229,7 +234,7 @@ def initialize() {
 
 def parse(String description) {    
     def map = stringToMap(description)
-    //log.info "map = ${map}"
+    log.info "map = ${map}"
     
     def parsedEvent = parseDiscoveryMessage(description)
     
@@ -240,7 +245,8 @@ def parse(String description) {
             log.error "storing image"
             storeTemporaryImage(map.tempImageKey, getPictureName())
             sendEvent(name: "refresh", isStateChange: "true", value: "Idle", descriptionText: "Refresh set to Idle4")
-            return null
+            //log.info "returing from parse"
+            //return null
         } catch (Exception e) {
             log.error e
         }
@@ -254,19 +260,23 @@ def parse(String description) {
     //process door state
     if (parsedEvent['body'] != null && parsedEvent['body'].size() > 4 && parsedEvent['body'].size() < 20) {
         def cmd = new String(parsedEvent['body'].decodeBase64())
-        def size = parsedEvent['body'].size()    
+        //def size = parsedEvent['body'].size()    
         log.warn "------------ door is ${cmd} ------------"
        
-        sendEvent(name: "esp.Door", value: cmd, isStateChange: true, descriptiontext: "door is ${cmd}")
+        //sendEvent(name: "door", value: cmd, isStateChange: true, descriptiontext: "door is ${cmd}")
         sendEvent(name: "refresh", isStateChange: "true", value: "Idle")
         sendEvent(name: "restart", isStateChange: "true", value: "Idle")
+        def evt1 = createEvent(name: "switch", value: cmd, isStateChange: true)
+        //log.warn "evt1 = ${evt1}"
         //runIn(30,take)
-        //take()
+        //takepicture()
+        //loadpicture()
+        return evt1
     } 
     
     //process device info
     if (parsedEvent['body'] != null && parsedEvent['body'].size() > 20) {
-        log.warn "processing device response"
+        log.warn "###### processing device response #######"
                      
         def json = new groovy.json.JsonSlurper().parseText(msg.body)
         log.warn "json = ${msg.body}"
@@ -277,11 +287,14 @@ def parse(String description) {
     
         log.debug "process each json key" 
         json.keySet().each {
+           //log.info "it = ${it}"
+           //log.info "value = ${json[${it}]}"
            sendEvent(name: it, value: json[it], isStateChange: "true")
         }
         sendEvent(name: "refresh", isStateChange: "true", value: "Idle")
         sendEvent(name: "restart", isStateChange: "true", value: "Idle")
     }   
+    //log.info "exiting parse"
 }
 
 def refresh() {
@@ -364,11 +377,13 @@ def loadpicture() {
     return hubAction
 }
 
-def open() {
+//def open() {
+def on() {
 	action()
 }
 
-def close() {
+//def close() {
+def off() {
 	action()
 }
 

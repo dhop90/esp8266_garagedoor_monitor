@@ -21,7 +21,7 @@ import groovy.json.JsonSlurper
 
 metadata {
     definition (name: "ESP8266 Garage Monitor", namespace: "dhop90", author: "David Hopson") {
-        //capability "Door Control"
+        capability "Door Control"
         //capability "Garage Door Control"
         capability "Polling"
         capability "Refresh"
@@ -245,8 +245,7 @@ def parse(String description) {
             log.error "storing image"
             storeTemporaryImage(map.tempImageKey, getPictureName())
             sendEvent(name: "refresh", isStateChange: "true", value: "Idle", descriptionText: "Refresh set to Idle4")
-            //log.info "returing from parse"
-            //return null
+            sendEvent(name: "image", isStateChange: "true", value: map.tempImageKey)
         } catch (Exception e) {
             log.error e
         }
